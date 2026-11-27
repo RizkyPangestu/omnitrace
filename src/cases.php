@@ -182,8 +182,13 @@ function uploaded_attachment(): array
     if (strlen($bytes) > MAX_ATTACHMENT) {
         reject(422, 'Attachment must be 2 MB or smaller.');
     }
-    foreach (FILE_TYPES as $kind => [$signature]) {
-        if (str_starts_with($bytes, $signature)) {
+    if (!class_exists(finfo::class, false)) {
+        reject(503, 'Attachment validation is temporarily unavailable.');
+    }
+    // Check the type inferred from the file contents against the allowed signature.
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
+    foreach (FILE_TYPES as $kind => [$signature, $expectedMime]) {
+        if ($mime === $expectedMime && str_starts_with($bytes, $signature)) {
             return [$bytes, $kind];
         }
     }
