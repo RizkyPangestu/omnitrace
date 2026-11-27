@@ -183,17 +183,21 @@ function throttle(string $action, int $max, int $window, ?string $subject = null
 {
     $now = time();
     $key = token_hash($action . ':' . ($subject ?? ($_SERVER['REMOTE_ADDR'] ?? 'unknown')));
+    sql('DELETE FROM rate_limits WHERE expires <= ?', [$now]);
     transaction(function () use ($key, $max, $window, $now): void {
-        sql('DELETE FROM rate_limits WHERE expires <= ?', [$now]);
-        $current = row('SELECT attempts FROM rate_limits WHERE bucket = ?', [$key]);
-        if ($current !== null && (int) $current['attempts'] >= $max) {
-            reject(429, 'Too many attempts. Try again later.');
-        }
+        $expires = $now + $window;
         sql(
             'INSERT INTO rate_limits (bucket, attempts, expires) VALUES (?, 1, ?)
-             ON CONFLICT(bucket) DO UPDATE SET attempts = attempts + 1',
-            [$key, $now + $window],
+             ON DUPLICATE KEY UPDATE
+                attempts = IF(expires <= ?, 1, attempts + 1),
+                expires = IF(expires <= ?, ?, expires)',
+            [$key, $expires, $now, $now, $expires],
         );
+        // The upsert holds the bucket row until this transaction commits.
+        $current = row('SELECT attempts FROM rate_limits WHERE bucket = ?', [$key]);
+        if ((int) $current['attempts'] > $max) {
+            reject(429, 'Too many attempts. Try again later.');
+        }
     });
 }
 
@@ -217,14 +221,17 @@ function start_authentication(array $user): void
 {
     $token = random_token();
     $now = time();
+    sql('DELETE FROM auth_sessions WHERE expires <= ?', [$now]);
     transaction(function () use ($user, $token, $now): void {
-        $current = row('SELECT password_hash FROM users WHERE id = ?', [$user['id']]);
+        $current = row('SELECT password_hash FROM users WHERE id = ? FOR UPDATE', [$user['id']]);
         if ($current === null || $current['password_hash'] !== $user['password_hash']) {
             reject(409, 'The account changed. Sign in again.');
         }
-        sql('DELETE FROM auth_sessions WHERE expires <= ?', [$now]);
         end_authentication();
-        sql('INSERT INTO auth_sessions VALUES (?, ?, ?)', [token_hash($token), $user['id'], $now + SESSION_AGE]);
+        sql(
+            'INSERT INTO auth_sessions (token_hash, user_id, expires) VALUES (?, ?, ?)',
+            [token_hash($token), $user['id'], $now + SESSION_AGE],
+        );
     });
     rotate_session();
     $_SESSION['sid'] = $token;

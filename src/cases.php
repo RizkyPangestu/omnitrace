@@ -19,11 +19,13 @@ const FILE_TYPES = [
 ];
 const MAX_ATTACHMENT = 2 * 1024 * 1024;
 
-function case_for(string $caseId, array $user): array
+function case_for(string $caseId, array $user, bool $lock = false): array
 {
-    $query = 'SELECT cases.*, owner.name AS client_name, analyst.name AS analyst_name
-              FROM cases JOIN users AS owner ON owner.id = cases.client_id
-              LEFT JOIN users AS analyst ON analyst.id = cases.analyst_id WHERE cases.id = ?';
+    $query = $lock
+        ? 'SELECT cases.* FROM cases WHERE cases.id = ?'
+        : 'SELECT cases.*, owner.name AS client_name, analyst.name AS analyst_name
+           FROM cases JOIN users AS owner ON owner.id = cases.client_id
+           LEFT JOIN users AS analyst ON analyst.id = cases.analyst_id WHERE cases.id = ?';
     $parameters = [$caseId];
     if ($user['role'] === 'client') {
         $query .= ' AND cases.client_id = ?';
@@ -32,7 +34,7 @@ function case_for(string $caseId, array $user): array
         $query .= ' AND cases.analyst_id = ?';
         $parameters[] = $user['id'];
     }
-    $case = row($query, $parameters);
+    $case = row($query . ($lock ? ' FOR UPDATE' : ''), $parameters);
     if ($case === null) {
         reject(404, 'Case not found.');
     }
@@ -41,7 +43,7 @@ function case_for(string $caseId, array $user): array
 
 function case_history(string $caseId, int $actorId, string $event): void
 {
-    sql('INSERT INTO case_events (case_id, actor_id, event) VALUES (?, ?, ?)', [$caseId, $actorId, $event]);
+    sql('INSERT INTO case_events (case_id, actor_id, `event`) VALUES (?, ?, ?)', [$caseId, $actorId, $event]);
 }
 
 function dashboard(?array $user): void
@@ -110,10 +112,10 @@ function case_detail(string $caseId, ?array $user): void
         : null;
     $evidence = $staff
         ? sql('SELECT id, title, url, accessed, notes, attachment_type FROM evidence
-               WHERE case_id = ? ORDER BY rowid DESC', [$caseId])->fetchAll()
+               WHERE case_id = ? ORDER BY entry_number DESC', [$caseId])->fetchAll()
         : [];
     $events = sql(
-        'SELECT case_events.event, case_events.created_at, users.role
+        'SELECT case_events.`event`, case_events.created_at, users.role
          FROM case_events JOIN users ON users.id = case_events.actor_id
          WHERE case_id = ? ORDER BY case_events.id DESC',
         [$caseId],
@@ -129,7 +131,7 @@ function decide_case(string $caseId, ?array $user): never
     $user = require_user($user, 'admin');
     $decision = input($_POST, 'decision');
     transaction(function () use ($caseId, $user, $decision): void {
-        $case = case_for($caseId, $user);
+        $case = case_for($caseId, $user, lock: true);
         $status = $case['status'];
         if ($decision === 'assign' && $status === 'submitted') {
             $analyst = row("SELECT id FROM users WHERE id = ? AND role = 'analyst'", [field('analyst_id', 'Analyst', 20)]);
@@ -202,7 +204,7 @@ function add_evidence(string $caseId, ?array $user): never
     $notes = field('notes', 'Findings and context', 6000);
     [$attachment, $kind] = uploaded_attachment();
     transaction(function () use ($caseId, $user, $title, $url, $accessed, $notes, $attachment, $kind): void {
-        $case = case_for($caseId, $user);
+        $case = case_for($caseId, $user, lock: true);
         if (!in_array($case['status'], ['assigned', 'revisions'], true)) {
             reject(409, 'Evidence can be added while a case is in progress.');
         }
@@ -260,15 +262,14 @@ function save_report(string $caseId, ?array $user): never
     $findings = field('findings', 'Findings', 12000);
     $limitations = field('limitations', 'Limitations', 6000);
     transaction(function () use ($caseId, $user, $mode, $summary, $findings, $limitations): void {
-        $case = case_for($caseId, $user);
+        $case = case_for($caseId, $user, lock: true);
         if (!in_array($case['status'], ['assigned', 'revisions'], true)) {
             reject(409, 'The report is locked at this case status.');
         }
         sql(
             'INSERT INTO reports (case_id, summary, findings, limitations) VALUES (?, ?, ?, ?)
-             ON CONFLICT(case_id) DO UPDATE SET summary = excluded.summary, findings = excluded.findings,
-             limitations = excluded.limitations, updated_at = CURRENT_TIMESTAMP',
-            [$caseId, $summary, $findings, $limitations],
+             ON DUPLICATE KEY UPDATE summary = ?, findings = ?, limitations = ?, updated_at = CURRENT_TIMESTAMP',
+            [$caseId, $summary, $findings, $limitations, $summary, $findings, $limitations],
         );
         if ($mode === 'submit') {
             sql("UPDATE cases SET status = 'in_review', decision_note = '' WHERE id = ?", [$caseId]);

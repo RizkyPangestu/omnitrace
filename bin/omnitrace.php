@@ -8,6 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 require __DIR__ . '/../src/database.php';
 require PROJECT_DIR . '/src/security.php';
+require PROJECT_DIR . '/src/accounts.php';
 
 umask(0077);
 
@@ -54,13 +55,16 @@ function read_password(bool $fromPipe): string
 }
 
 try {
-    if (!in_array('sqlite', PDO::getAvailableDrivers(), true) || !defined('PASSWORD_ARGON2ID')) {
-        throw new RuntimeException('Enable PDO SQLite and Argon2id before running OmniTrace.');
+    if (!in_array('mysql', PDO::getAvailableDrivers(), true) || !defined('PASSWORD_ARGON2ID')) {
+        throw new RuntimeException('Enable PDO MySQL and Argon2id before running OmniTrace.');
     }
     $command = $argv[1] ?? '';
     if ($command === 'init-db' && $argc === 2) {
         initialize_database();
         echo "Database initialized.\n";
+    } elseif ($command === 'import-sqlite' && $argc === 3) {
+        require PROJECT_DIR . '/src/legacy_import.php';
+        printf("Imported %d records. Users can sign in again.\n", import_legacy_database($argv[2]));
     } elseif ($command === 'create-staff' && ($argc === 5 || ($argc === 6 && $argv[5] === '--password-stdin'))) {
         [, , $role, $rawEmail, $rawName] = $argv;
         if (!in_array($role, ['admin', 'analyst'], true)) {
@@ -73,33 +77,35 @@ try {
         }
         $email = email_address($rawEmail);
         $hash = hash_password(read_password($argc === 6));
-        if (sql(
-            'INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, ?)
-             ON CONFLICT(email) DO NOTHING',
-            [$email, $name, $hash, $role],
-        )->rowCount() !== 1) {
+        if (!create_account($email, $name, $hash, $role)) {
             throw new RuntimeException('That email address is already registered.');
         }
         echo "Staff account created.\n";
     } elseif ($command === 'issue-reset' && $argc === 3) {
-        $account = row('SELECT id FROM users WHERE email = ?', [email_address($argv[2])]);
-        if ($account === null) {
-            throw new RuntimeException('Account not found.');
-        }
-        $code = random_token();
-        sql(
-            'INSERT INTO password_resets VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE
-             SET token_hash = excluded.token_hash, expires = excluded.expires',
-            [$account['id'], token_hash($code), time() + 900],
-        );
+        $email = email_address($argv[2]);
+        $code = transaction(function () use ($email): string {
+            $account = row('SELECT id FROM users WHERE email = ? FOR UPDATE', [$email]);
+            if ($account === null) {
+                throw new RuntimeException('Account not found.');
+            }
+            $code = random_token();
+            $digest = token_hash($code);
+            $expires = time() + 900;
+            sql(
+                'INSERT INTO password_resets (user_id, token_hash, expires) VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE token_hash = ?, expires = ?',
+                [$account['id'], $digest, $expires, $digest, $expires],
+            );
+            return $code;
+        });
         echo $code . PHP_EOL;
     } else {
         throw new RuntimeException(
-            "Usage\nphp bin/omnitrace.php init-db\nphp bin/omnitrace.php create-staff admin|analyst EMAIL NAME [--password-stdin]\nphp bin/omnitrace.php issue-reset EMAIL",
+            "Usage\nphp bin/omnitrace.php init-db\nphp bin/omnitrace.php import-sqlite FILE\nphp bin/omnitrace.php create-staff admin|analyst EMAIL NAME [--password-stdin]\nphp bin/omnitrace.php issue-reset EMAIL",
         );
     }
 } catch (PDOException $error) {
-    fwrite(STDERR, "Database operation failed. Check the path and permissions.\n");
+    fwrite(STDERR, "Database operation failed. Check MySQL connection settings, schema, and permissions.\n");
     exit(1);
 } catch (RuntimeException $error) {
     fwrite(STDERR, $error->getMessage() . PHP_EOL);

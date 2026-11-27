@@ -10,6 +10,19 @@ function submitted_password(): string
     return hash_password($password);
 }
 
+function create_account(string $email, string $name, string $hash, string $role): bool
+{
+    try {
+        sql('INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, ?)', [$email, $name, $hash, $role]);
+        return true;
+    } catch (PDOException $error) {
+        if ((int) ($error->errorInfo[1] ?? 0) !== 1062) {
+            throw $error;
+        }
+        return false;
+    }
+}
+
 function replace_password(int $userId, string $hash): void
 {
     sql('UPDATE users SET password_hash = ? WHERE id = ?', [$hash, $userId]);
@@ -52,11 +65,7 @@ function register(?array $user, bool $post): void
         $email = email_address(input($_POST, 'email'));
         $name = field('name', 'Full name', 100);
         $hash = submitted_password();
-        sql(
-            "INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, 'client')
-             ON CONFLICT(email) DO NOTHING",
-            [$email, $name, $hash],
-        );
+        create_account($email, $name, $hash, 'client');
         flash('If the address is available, your account is ready. Sign in with your password.');
         redirect('/login' . ($plan === '' ? '' : '?plan=' . $plan));
     }
@@ -69,18 +78,24 @@ function reset_password(bool $post): void
         throttle('reset', 8, 900);
         $digest = token_hash(field('code', 'Reset code', 100));
         $lookup = 'SELECT user_id FROM password_resets WHERE token_hash = ? AND expires > ?';
-        if (row($lookup, [$digest, time()]) === null) {
+        $candidate = row($lookup, [$digest, time()]);
+        if ($candidate === null) {
             reject(422, 'The reset code is invalid or expired.');
         }
         $hash = submitted_password();
-        transaction(function () use ($lookup, $digest, $hash): void {
-            $reset = row($lookup, [$digest, time()]);
-            if ($reset === null) {
+        $userId = (int) $candidate['user_id'];
+        transaction(function () use ($userId, $digest, $hash): void {
+            $account = row('SELECT id FROM users WHERE id = ? FOR UPDATE', [$userId]);
+            $reset = row(
+                'SELECT user_id FROM password_resets WHERE user_id = ? AND token_hash = ? AND expires > ? FOR UPDATE',
+                [$userId, $digest, time()],
+            );
+            if ($account === null || $reset === null) {
                 reject(422, 'The reset code is invalid or expired.');
             }
-            replace_password((int) $reset['user_id'], $hash);
-            end_authentication();
+            replace_password($userId, $hash);
         });
+        end_authentication();
         rotate_session();
         flash('Password updated. Sign in again.');
         redirect('/login');
@@ -119,7 +134,7 @@ function change_password(?array $user): never
     }
     $hash = submitted_password();
     transaction(function () use ($user, $hash): void {
-        $current = row('SELECT password_hash FROM users WHERE id = ?', [$user['id']]);
+        $current = row('SELECT password_hash FROM users WHERE id = ? FOR UPDATE', [$user['id']]);
         if ($current === null || $current['password_hash'] !== $user['password_hash']) {
             reject(409, 'The account changed. Sign in again.');
         }
