@@ -1,55 +1,62 @@
 # OmniTrace
 
-Aplikasi web untuk mengelola pengajuan riset berbasis sumber publik. Prototipe HTML/CSS OMNITRACE BIFEST menjadi dasar antarmuka. Aplikasi menyimpan kasus, catatan bukti, keputusan, dan laporan di SQLite.
+Aplikasi web untuk mengelola pengajuan riset berbasis sumber publik. Halaman HTML dan CSS mengikuti prototipe OMNITRACE BIFEST. PHP menangani formulir, autentikasi, otorisasi per kasus, dan penyimpanan SQLite. Folder `views/` berisi template `.html` yang dirender oleh PHP. Dokumen root server adalah `public/`.
 
 ## Jalankan untuk demo lokal
 
-Gunakan Python 3.11 atau yang lebih baru. Jalankan perintah dari folder proyek.
+Gunakan PHP 8.2 atau lebih baru dengan PDO SQLite dan dukungan Argon2id. Periksa instalasi dari folder proyek.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-export OMNITRACE_LOCAL=1
-export OMNITRACE_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
-python -m flask --app app init-db
-python -m flask --app app create-staff admin admin@example.org "Demo Admin"
-python -m flask --app app create-staff analyst analyst@example.org "Demo Analyst"
-python serve.py
+php -r 'var_dump(PDO::getAvailableDrivers(), password_algos());'
+php bin/omnitrace.php init-db
+php bin/omnitrace.php create-staff admin admin@example.org "Demo Admin"
+php bin/omnitrace.php create-staff analyst analyst@example.org "Demo Analyst"
+OMNITRACE_LOCAL=1 php -d post_max_size=3M -d upload_max_filesize=2M -S 127.0.0.1:5000 -t public dev-router.php
 ```
 
-Pada Windows PowerShell, gunakan `.venv\Scripts\Activate.ps1` dan set variabel dengan sintaks berikut. Perintah instalasi, pembuatan akun, dan menjalankan server sama dengan contoh di atas.
+Buka [OmniTrace](http://127.0.0.1:5000). CLI meminta kata sandi akun staf secara interaktif. Buat akun klien melalui **Create an account**. Gunakan profil browser terpisah atau logout sebelum berpindah peran. Direktori `var/` menyimpan database dan sesi di luar dokumen root.
+
+### Windows dengan XAMPP
+
+Dari PowerShell, gunakan PHP XAMPP yang mendukung PDO SQLite dan Argon2id. Sesuaikan path sesuai instalasi. Aktifkan ekstensi PDO SQLite di `php.ini` yang dipakai CLI jika perlu.
 
 ```powershell
+$php = "C:\xampp\php\php.exe"
+& $php -r 'var_dump(PDO::getAvailableDrivers(), password_algos());'
+& $php bin/omnitrace.php init-db
+$admin = Get-Credential -UserName "admin@example.org" -Message "Tentukan password akun admin OmniTrace"
+$admin.GetNetworkCredential().Password | & $php bin/omnitrace.php create-staff admin admin@example.org "Demo Admin" --password-stdin
+$analyst = Get-Credential -UserName "analyst@example.org" -Message "Tentukan password akun analis OmniTrace"
+$analyst.GetNetworkCredential().Password | & $php bin/omnitrace.php create-staff analyst analyst@example.org "Demo Analyst" --password-stdin
 $env:OMNITRACE_LOCAL = "1"
-$env:OMNITRACE_SECRET = (python -c "import secrets; print(secrets.token_urlsafe(48))")
+& $php -d post_max_size=3M -d upload_max_filesize=2M -S 127.0.0.1:5000 -t public dev-router.php
 ```
-
-Buka [OmniTrace](http://127.0.0.1:5000). CLI meminta kata sandi akun staf secara interaktif. Daftarkan akun klien lewat **Create an account**. Gunakan profil browser terpisah atau keluar dari akun sebelum berpindah peran. Folder `instance/` menyimpan database lokal. Mengganti secret akan mengakhiri sesi browser yang ada.
 
 ## Alur demo
 
-1. Klien masuk, pilih **Request investigation**, isi tujuan dan konfirmasi kewenangan, lalu kirim brief.
-2. Admin membuka request dan memilih **Approve and assign** untuk menugaskan analis. Admin juga dapat menolak dengan alasan.
-3. Analis membuka kasus yang ditugaskan, menyimpan catatan sumber dan lampiran jika diperlukan, lalu pilih **Submit for review** pada laporan.
-4. Admin meninjau isi laporan dan memilih **Publish report** atau **Request revision**. Analis dapat memperbaiki dan mengirim ulang laporan.
-5. Klien pemilik membuka dan mengunduh laporan terbit dari kasusnya. Klien kedua melihat daftar kasusnya sendiri.
+1. Klien masuk, memilih **Request investigation**, mengisi tujuan, mengonfirmasi kewenangan, lalu mengirim brief.
+2. Admin memilih **Approve and assign** untuk menugaskan analis. Admin juga dapat menolak dengan alasan.
+3. Analis menambahkan catatan bukti dan lampiran jika diperlukan, lalu memilih **Submit for review** pada laporan.
+4. Admin meninjau laporan dan memilih **Publish report** atau **Request revision**. Analis dapat memperbaiki dan mengirim ulang laporan.
+5. Klien pemilik membuka kasusnya dan mengunduh laporan terbit.
 
-Untuk pemulihan kata sandi, operator yang sudah memverifikasi pemilik akun menjalankan perintah berikut. Bagikan kode yang dihasilkan melalui kanal privat. Pengguna memasukkan kode pada **Forgot password?** dalam 15 menit.
+Untuk reset kata sandi, operator memverifikasi pemilik akun lalu menjalankan perintah berikut. Bagikan kode melalui kanal privat. Pengguna memasukkan kode pada **Forgot password?** dalam 15 menit.
 
 ```bash
-python -m flask --app app issue-reset client@example.org
+php bin/omnitrace.php issue-reset client@example.org
 ```
 
-## Konfigurasi HTTPS
+## Penggunaan melalui HTTPS
 
-Mode lokal menggunakan HTTP pada loopback. Untuk deployment, hapus `OMNITRACE_LOCAL`, pasang secret acak yang persisten melalui secret manager atau konfigurasi layanan, lalu atur `OMNITRACE_HOSTS` ke nama domain yang digunakan. Arahkan trafik HTTPS dari satu reverse proxy pada mesin yang sama ke Waitress di `127.0.0.1:5000`. Proxy harus menetapkan `Host` yang sah, menimpa `X-Forwarded-For` dengan IP klien yang diketahui, menimpa `X-Forwarded-Proto` sesuai koneksi HTTPS, dan mengalihkan HTTP ke HTTPS. Konfigurasi ini sesuai dengan kepercayaan satu proxy loopback di `serve.py`.
+Gunakan web server dengan PHP dan TLS. Tetapkan `public/` sebagai dokumen root, layani aset dari `/static/`, dan teruskan rute aplikasi ke `public/index.php`. Pada Apache, `FallbackResource /index.php` di virtual host dapat menangani rute tersebut. Pada Nginx, gunakan `try_files $uri /index.php?$query_string` dan arahkan eksekusi PHP ke front controller di PHP-FPM. Pastikan web server atau proxy tepercaya menetapkan variabel server `HTTPS` untuk koneksi TLS, serta `REMOTE_ADDR` dari IP klien yang telah diverifikasi.
 
-Opsional, gunakan `OMNITRACE_DB` untuk memilih berkas SQLite pada direktori privat dan `OMNITRACE_PORT` untuk mengubah port internal. Jalankan aplikasi sebagai akun layanan dengan akses terbatas. Kelola izin, cadangan, dan enkripsi penyimpanan pada lingkungan deployment.
+Hapus `OMNITRACE_LOCAL` dari lingkungan deployment, set `OMNITRACE_HOSTS` ke domain aplikasi, dan alihkan HTTP ke HTTPS di web server. Tetapkan `post_max_size=3M` dan `upload_max_filesize=2M` di konfigurasi PHP. Gunakan direktori privat yang dapat ditulis oleh akun layanan untuk database dan sesi. `OMNITRACE_DATA_DIR` dapat menunjuk ke direktori data privat. `OMNITRACE_DB` dapat menunjuk ke berkas SQLite tertentu di luar dokumen root.
 
-Aplikasi demo tidak menagih pembayaran atau mengambil URL sumber dari jaringan. Pemeriksaan lampiran membatasi ukuran dan mengenali awalan berkas, lalu menyimpannya privat dan menyajikannya sebagai unduhan. Pemindaian malware dan verifikasi kepemilikan email membutuhkan layanan tambahan. Gunakan data fiktif saat demonstrasi dan saat bertukar kode.
+Jika beralih dari versi Flask dengan database lama, cadangkan database dahulu, tetapkan `OMNITRACE_DB` ke berkas tersebut, lalu jalankan `php bin/omnitrace.php init-db`. Skema yang sama mempertahankan akun, kasus, bukti, dan laporan. Akun lama perlu mereset kata sandi satu kali untuk beralih dari scrypt ke Argon2id. Pengguna masuk ulang setelah migrasi sesi.
+
+Aplikasi menyimpan URL sumber sebagai teks dan pemeriksaan lampiran menggunakan batas ukuran serta awalan berkas yang diizinkan. Penyebaran dengan data nyata memerlukan pengaturan izin penyimpanan, pencadangan, dan pemindaian berkas sesuai kebutuhan. Gunakan data fiktif untuk demo dan pertukaran kode.
 
 ## Laporan tugas
 
 - [Dokumentasi OmniTrace](Laporan/01-Dokumentasi-OmniTrace.docx)
-- [Draf code review kelompok pasangan](Laporan/02-Draf-Code-Review-Kelompok-Pasangan.docx). Temuan aktual dan bukti per temuan membutuhkan source code kelompok pasangan.
+- [Draf code review kelompok pasangan](Laporan/02-Draf-Code-Review-Kelompok-Pasangan.docx). Temuan dan bukti per temuan membutuhkan source code kelompok pasangan.

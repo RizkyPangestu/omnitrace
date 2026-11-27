@@ -1,22 +1,23 @@
-{% extends "workspace.html" %}
-{% from "fields.html" import csrf with context %}
-{% block title %}Request investigation | OmniTrace{% endblock %}
-{% block content %}
+<?php
+$workspacePage = 'new_case';
+$title = 'Request investigation | OmniTrace';
+require __DIR__ . '/workspace_head.html';
+?>
 <div class="page-heading"><div><h1>Request investigation</h1><p>Provide the context needed to assess your request.</p></div></div>
 <div class="grid detail">
   <section class="panel">
     <h2>Request brief</h2>
-    <form method="post" class="app-form">
-      {{ csrf() }}
-      <label>Plan<select name="plan">{% for key, label in plans.items() %}<option value="{{ key }}" {% if key == plan %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-      <label>Service<select name="service">{% for service in services %}<option>{{ service }}</option>{% endfor %}</select></label>
+    <form method="post" action="/cases/new" class="app-form">
+      <?php csrf_input(); ?>
+      <label>Plan<select name="plan"><?php foreach (PLANS as $key => $label): ?><option value="<?= escape($key) ?>"<?= $key === $plan ? ' selected' : '' ?>><?= escape($label) ?></option><?php endforeach; ?></select></label>
+      <label>Service<select name="service"><?php foreach (SERVICES as $service): ?><option><?= escape($service) ?></option><?php endforeach; ?></select></label>
       <label>Request title<input name="title" maxlength="140" placeholder="Company background review" required></label>
       <label>Investigation purpose<textarea name="purpose" maxlength="4000" rows="4" required></textarea></label>
       <label>Initial information <small>(optional)</small><textarea name="context" maxlength="8000" rows="4"></textarea></label>
       <label class="check"><input type="checkbox" name="consent" value="yes" required> I confirm that the purpose is lawful and I am authorized to submit this information.</label>
-      <div class="actions"><button type="submit" class="button">Submit request</button><a class="button secondary" href="{{ url_for('dashboard') }}">Cancel</a></div>
+      <div class="actions"><button type="submit" class="button">Submit request</button><a class="button secondary" href="/workspace">Cancel</a></div>
     </form>
   </section>
   <aside class="panel"><h2>What happens next?</h2><p>An admin reviews the request and assigns an analyst to accepted cases. You can follow the case status from your workspace.</p><p>List prices are indicative. Scope, cost, and timeline are agreed separately.</p></aside>
 </div>
-{% endblock %}
+<?php require __DIR__ . '/workspace_foot.html'; ?>

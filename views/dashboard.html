@@ -1,0 +1,38 @@
+<?php
+$workspacePage = 'dashboard';
+$title = ROLE_TITLES[$user['role']] . ' | OmniTrace';
+require __DIR__ . '/workspace_head.html';
+?>
+<div class="page-heading">
+  <div><h1><?= escape(ROLE_TITLES[$role]) ?></h1>
+  <p><?= [
+      'client' => 'Track requests and read final reports.',
+      'analyst' => 'Review assigned investigations and prepare reports.',
+      'admin' => 'Review requests, assign analysts, and publish reports.',
+  ][$role] ?></p></div>
+  <?php if ($role === 'client'): ?><a class="button" href="/cases/new">Request investigation</a><?php endif; ?>
+</div>
+<div class="stats">
+  <article class="panel"><p>Total cases</p><strong><?= count($cases) ?></strong></article>
+  <article class="panel"><p>Open cases</p><strong><?= $open ?></strong></article>
+  <article class="panel"><p>Published reports</p><strong><?= $published ?></strong></article>
+</div>
+<section class="panel">
+  <h2>Case register</h2>
+  <?php if ($cases !== []): ?>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Case</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Opened (UTC)</th></tr></thead>
+      <tbody><?php foreach ($cases as $item): ?>
+        <tr>
+          <td><a class="text-link" href="/cases/<?= escape($item['id']) ?>"><?= escape($item['title']) ?></a></td>
+          <td><?= escape($item['service']) ?></td>
+          <td><span class="badge"><?= escape(STATUS_LABELS[$item['status']]) ?></span></td>
+          <td><?= escape(substr($item['created_at'], 0, 10)) ?></td>
+        </tr>
+      <?php endforeach; ?></tbody>
+    </table>
+  </div>
+  <?php else: ?><p><?= $role === 'client' ? 'Your submitted requests will appear here.' : 'There are no cases in your register yet.' ?></p><?php endif; ?>
+</section>
+<?php require __DIR__ . '/workspace_foot.html'; ?>

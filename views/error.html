@@ -1,0 +1,24 @@
+<?php
+$title = $code . ' | OmniTrace';
+$headings = [
+    400 => 'Request could not be verified',
+    403 => 'Access denied',
+    404 => 'Page unavailable',
+    405 => 'Method unavailable',
+    409 => 'Case state changed',
+    413 => 'Request too large',
+    422 => 'Check your input',
+    429 => 'Too many attempts',
+    500 => 'Something went wrong',
+];
+require __DIR__ . '/head.html';
+?>
+<main id="main" class="container editorial-section">
+  <section class="panel error-panel">
+    <p class="eyebrow">HTTP <?= escape($code) ?></p>
+    <h1><?= escape($headings[$code] ?? 'Request unavailable') ?></h1>
+    <p><?= escape($message) ?></p>
+    <a class="button" href="<?= $user !== null ? '/workspace' : '/' ?>"><?= $user !== null ? 'Back to workspace' : 'Back to home' ?></a>
+  </section>
+</main>
+<?php require __DIR__ . '/foot.html'; ?>

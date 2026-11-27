@@ -1,6 +1,4 @@
-{% extends "public.html" %}
-{% block title %}OmniTrace{% endblock %}
-{% block content %}
+<?php $title = "OmniTrace"; require __DIR__ . '/public_head.html'; ?>
 <main id="main">
 <section class="studio-hero container">
 <div class="hero-copy">
@@ -11,8 +9,8 @@
 </h1>
 <p class="hero-description">We research public sources, examine their connections, and turn findings into clear insights. Led by analysts, from the first question to the final report.</p>
 <div class="actions">
-<a class="button" href="{{ url_for('new_case') }}">Tell us what you need</a>
-<a class="quiet-link" href="{{ url_for('sample_report') }}">View a sample report</a>
+<a class="button" href="/cases/new">Tell us what you need</a>
+<a class="quiet-link" href="/sample-report">View a sample report</a>
 </div>
 <div class="hero-footnote">
 <span>01 / Manual research</span>
@@ -84,19 +82,19 @@
 <p>Start with a specific need. We review the scope before accepting a request.</p>
 </div>
 <div class="service-rows">
-<a href="{{ url_for('services') }}">
+<a href="/services">
 <span class="row-num">01</span>
 <h3>Business background</h3>
 <p>Company information, publications, and business profile consistency across open sources.</p>
 <span class="row-arrow">↗</span>
 </a>
-<a href="{{ url_for('services') }}">
+<a href="/services">
 <span class="row-num">02</span>
 <h3>Digital footprint verification</h3>
 <p>Cross-checking accounts, domains, and publicly available information.</p>
 <span class="row-arrow">↗</span>
 </a>
-<a href="{{ url_for('services') }}">
+<a href="/services">
 <span class="row-num">03</span>
 <h3>Document-based research</h3>
 <p>Summaries and timelines from public documents to support an initial review.</p>
@@ -109,7 +107,7 @@
 <div>
 <span class="kicker">EVIDENCE BEFORE CONCLUSIONS</span>
 <h2>Clear findings.<br>Including their limits.</h2>
-<a href="{{ url_for('sample_report') }}" class="quiet-link">Read a sample analysis</a>
+<a href="/sample-report" class="quiet-link">Read a sample analysis</a>
 </div>
 <div class="method-notes">
 <article>
@@ -173,7 +171,7 @@
 <h2>Start with a focused question.</h2>
 <p>Basic plan Rp420.000 · Insight plan Rp760.000 per case.</p>
 </div>
-<a class="button" href="{{ url_for('services') }}">Compare plans</a>
+<a class="button" href="/services">Compare plans</a>
 </section>
 </main>
-{% endblock %}
+<?php require __DIR__ . '/public_foot.html'; ?>

@@ -1,6 +1,4 @@
-{% extends "public.html" %}
-{% block title %}Sample investigation report | OmniTrace{% endblock %}
-{% block content %}
+<?php $title = "Sample investigation report | OmniTrace"; require __DIR__ . '/public_head.html'; ?>
 <main id="main" class="container editorial-section">
   <div class="page-heading"><div><h1>Sample investigation report</h1><p>North entity verification · Fictional example</p></div></div>
   <div class="grid detail">
@@ -15,4 +13,4 @@
     <aside class="panel"><h2>Sources reviewed</h2><ul><li>Public business registry</li><li>Official business website</li></ul></aside>
   </div>
 </main>
-{% endblock %}
+<?php require __DIR__ . '/public_foot.html'; ?>

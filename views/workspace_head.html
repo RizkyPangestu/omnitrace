@@ -1,0 +1,21 @@
+<?php $role = $user['role']; require __DIR__ . '/head.html'; ?>
+<div class="workspace">
+  <aside class="sidebar dark">
+    <a class="brand" href="/"><span class="mark">O</span> OmniTrace</a>
+    <nav aria-label="Workspace navigation">
+      <a href="/workspace" <?= $workspacePage === 'dashboard' ? 'aria-current="page"' : '' ?>><?= $role === 'admin' ? 'Case register' : 'My cases' ?></a>
+      <?php if ($role === 'client'): ?>
+      <a href="/cases/new" <?= $workspacePage === 'new_case' ? 'aria-current="page"' : '' ?>>Request investigation</a>
+      <?php endif; ?>
+      <a href="/profile" <?= $workspacePage === 'profile' ? 'aria-current="page"' : '' ?>>My profile</a>
+    </nav>
+  </aside>
+  <div class="workspace-main">
+    <header class="topbar">
+      <span><?= escape($user['name']) ?> <span class="badge"><?= escape(ucfirst($role)) ?></span></span>
+      <form method="post" action="/logout"><?php csrf_input(); ?><button type="submit" class="signout">Log out</button></form>
+    </header>
+    <main id="main" class="content">
+      <?php foreach (flash_messages() as $notice): ?>
+      <p class="notice" role="status"><?= escape($notice) ?></p>
+      <?php endforeach; ?>

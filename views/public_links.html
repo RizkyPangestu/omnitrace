@@ -1,0 +1,9 @@
+<a href="/services">Services &amp; pricing</a>
+<a href="/#proses">How it works</a>
+<a href="/#pendekatan">Method</a>
+<?php if ($user !== null): ?>
+<a href="/workspace" class="button">Open workspace</a>
+<?php else: ?>
+<a href="/login">Log in</a>
+<a href="/register" class="button">Create an account</a>
+<?php endif; ?>
