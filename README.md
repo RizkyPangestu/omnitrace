@@ -98,4 +98,5 @@ Aplikasi menyimpan URL sumber sebagai teks dan memeriksa batas ukuran serta awal
 ## Laporan tugas
 
 - [Dokumentasi OmniTrace](Laporan/01-Dokumentasi-OmniTrace.docx)
+- [Panduan fungsi dan lokasi kode](Laporan/Panduan-Fungsi-OmniTrace.md)
 - [Draf code review kelompok pasangan](Laporan/02-Draf-Code-Review-Kelompok-Pasangan.docx). Temuan dan bukti per temuan membutuhkan source code kelompok pasangan.
