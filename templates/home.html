@@ -1,0 +1,179 @@
+{% extends "public.html" %}
+{% block title %}OmniTrace{% endblock %}
+{% block content %}
+<main id="main">
+<section class="studio-hero container">
+<div class="hero-copy">
+<div class="kicker">
+<span class="live-dot">
+</span> OPEN-SOURCE INTELLIGENCE / HUMAN-VERIFIED</div>
+<h1>Trace the evidence.<br>Understand <em>context.</em>
+</h1>
+<p class="hero-description">We research public sources, examine their connections, and turn findings into clear insights. Led by analysts, from the first question to the final report.</p>
+<div class="actions">
+<a class="button" href="{{ url_for('new_case') }}">Tell us what you need</a>
+<a class="quiet-link" href="{{ url_for('sample_report') }}">View a sample report</a>
+</div>
+<div class="hero-footnote">
+<span>01 / Manual research</span>
+<span>02 / Documented sources</span>
+<span>03 / Context verified</span>
+</div>
+</div>
+<aside class="dossier" aria-label="Sample investigation report">
+<div class="folder-tab">OSINT CASE FILE / 003</div>
+<div class="dossier-paper">
+<div class="file-meta">
+<span>OT / 026 / 003</span>
+<span class="sample-stamp">SAMPLE</span>
+</div>
+<span class="document-category">DIGITAL FOOTPRINT VERIFICATION</span>
+<h2>One entity.<br>Multiple sources.</h2>
+<p class="document-intro">Distinguishing name matches from connections supported by sources.</p>
+<div class="source-ledger">
+<div>
+<span class="source-number">01</span>
+<div>
+<strong>Official website</strong>
+<small>Business name &amp; domain</small>
+</div>
+<span class="source-state">Consistent</span>
+</div>
+<div>
+<span class="source-number">02</span>
+<div>
+<strong>Open publications</strong>
+<small>Business activity history</small>
+</div>
+<span class="source-state">Consistent</span>
+</div>
+<div>
+<span class="source-number">03</span>
+<div>
+<strong>Public profiles</strong>
+<small>Individual identity links</small>
+</div>
+<span class="source-state pending">Unconfirmed</span>
+</div>
+</div>
+<div class="analyst-note">
+<span>ANALYST NOTE</span>
+<p>A matching name alone does not establish that two profiles belong to the same person.</p>
+</div>
+<div class="document-bottom">
+<span>Human-reviewed research</span>
+<span>01 / 04</span>
+</div>
+</div>
+</aside>
+</section>
+<section class="context-strip">
+<div class="container">
+<span>DECISIONS WITH CONTEXT</span>
+<p>Review a business's background.</p>
+<p>Understand digital identities.</p>
+<p>Explore public information.</p>
+</div>
+</section>
+<section class="container editorial-section" id="layanan">
+<div class="section-heading">
+<div>
+<span class="kicker">01 — SCOPE</span>
+<h2>The right questions.<br>Research with direction.</h2>
+</div>
+<p>Start with a specific need. We review the scope before accepting a request.</p>
+</div>
+<div class="service-rows">
+<a href="{{ url_for('services') }}">
+<span class="row-num">01</span>
+<h3>Business background</h3>
+<p>Company information, publications, and business profile consistency across open sources.</p>
+<span class="row-arrow">↗</span>
+</a>
+<a href="{{ url_for('services') }}">
+<span class="row-num">02</span>
+<h3>Digital footprint verification</h3>
+<p>Cross-checking accounts, domains, and publicly available information.</p>
+<span class="row-arrow">↗</span>
+</a>
+<a href="{{ url_for('services') }}">
+<span class="row-num">03</span>
+<h3>Document-based research</h3>
+<p>Summaries and timelines from public documents to support an initial review.</p>
+<span class="row-arrow">↗</span>
+</a>
+</div>
+</section>
+<section class="method-band" id="pendekatan">
+<div class="container method-content">
+<div>
+<span class="kicker">EVIDENCE BEFORE CONCLUSIONS</span>
+<h2>Clear findings.<br>Including their limits.</h2>
+<a href="{{ url_for('sample_report') }}" class="quiet-link">Read a sample analysis</a>
+</div>
+<div class="method-notes">
+<article>
+<span>01</span>
+<div>
+<h3>Traceable references</h3>
+<p>Each key finding includes a source and access time.</p>
+</div>
+</article>
+<article>
+<span>02</span>
+<div>
+<h3>Facts separated from assumptions</h3>
+<p>Unconfirmed information is never presented as a certainty.</p>
+</div>
+</article>
+<article>
+<span>03</span>
+<div>
+<h3>Scope stays defined</h3>
+<p>Research uses public sources and authorized access.</p>
+</div>
+</article>
+</div>
+</div>
+</section>
+<section class="container editorial-section" id="proses">
+<div class="section-heading">
+<div>
+<span class="kicker">02 — HOW IT WORKS</span>
+<h2>From brief to report.</h2>
+</div>
+<p>See what is being worked on and where your case stands.</p>
+</div>
+<ol class="process studio-process">
+<li>
+<span>01</span>
+<h3>Share your needs</h3>
+<p>Describe the subject, purpose, and initial information.</p>
+</li>
+<li>
+<span>02</span>
+<h3>Agree on scope</h3>
+<p>An admin reviews the work, cost, and estimated timeline.</p>
+</li>
+<li>
+<span>03</span>
+<h3>Analyst researches</h3>
+<p>Sources are reviewed and findings recorded manually.</p>
+</li>
+<li>
+<span>04</span>
+<h3>Receive your report</h3>
+<p>Your report is reviewed before you access the results.</p>
+</li>
+</ol>
+</section>
+<section class="container pricing-teaser">
+<div>
+<span class="kicker">TWO PLANS, CLEAR SCOPE</span>
+<h2>Start with a focused question.</h2>
+<p>Basic plan Rp420.000 · Insight plan Rp760.000 per case.</p>
+</div>
+<a class="button" href="{{ url_for('services') }}">Compare plans</a>
+</section>
+</main>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "public.html" %}
+{% block title %}Services & pricing | OmniTrace{% endblock %}
+{% block content %}
+<main class="container editorial-section" id="main">
+<span class="kicker">SERVICES &amp; PRICING</span>
+<div class="section-heading">
+<div>
+<h1>Depth that matters.<br>
+<em>Scope that fits.</em>
+</h1>
+</div>
+<p>Two plans for focused research. Proposed student-scale pricing, confirmed after reviewing your brief.</p>
+</div>
+<div class="price-grid">
+<article class="price-plan">
+<span class="kicker">01 / INITIAL REVIEW</span>
+<h2>Basic</h2>
+<p>For one specific question.</p>
+<div class="price">Rp420.000 <small>/ case</small>
+</div>
+<ul>
+<li>One public account or business</li>
+<li>Up to three public sources</li>
+<li>Digital footprint summary &amp; source links</li>
+<li>Downloadable brief report</li>
+<li>One results Q&amp;A session via chat</li>
+</ul>
+<div class="plan-meta">
+<span>2–3 business days</span>
+<span>Up to 2 hours of research &amp; reporting</span>
+</div>
+<a class="button secondary" href="{{ url_for('new_case', plan='basic') }}">Choose Basic</a>
+</article>
+<article class="price-plan featured">
+<span class="kicker">02 / EXTENDED REVIEW</span>
+<h2>Insight</h2>
+<p>For understanding connections and context.</p>
+<div class="price">Rp760.000 <small>/ case</small>
+</div>
+<ul>
+<li>One subject and one related entity</li>
+<li>Up to eight public sources</li>
+<li>Cross-checking &amp; a brief timeline</li>
+<li>Downloadable report, evidence, and confidence assessment</li>
+<li>30-minute results consultation</li>
+</ul>
+<div class="plan-meta">
+<span>4–5 business days</span>
+<span>Up to 5 hours of research &amp; reporting</span>
+</div>
+<a class="button" href="{{ url_for('new_case', plan='insight') }}">Choose Insight</a>
+</article>
+</div>
+<div class="terms-note">
+<h3>Before you order</h3>
+<p>Requests are reviewed first. Turnaround begins once the scope is agreed. Pricing covers work within the plan limits and does not guarantee that information will be found. Additional work requires a new agreement.</p>
+</div>
+<section class="faq">
+<h2>Frequently asked questions</h2>
+<details>
+<summary>What is cross-checking?</summary>
+<p>Comparing information from different sources to identify agreement or inconsistencies. Sources that simply copy one another are not independent evidence.</p>
+</details>
+<details>
+<summary>What if no information is found?</summary>
+<p>The report explains which sources were checked and the limits of the research. Missing information does not prove that the information does not exist.</p>
+</details>
+<details>
+<summary>What does the results Q&amp;A include?</summary>
+<p>An explanation of the report within the original scope. Research into new subjects is not included.</p>
+</details>
+</section>
+</main>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} | OmniTrace{% endblock %}
+{% block body %}
+<main id="main" class="container editorial-section">
+  <section class="panel error-panel">
+    <p class="eyebrow">HTTP {{ code }}</p>
+    <h1>{{ {400: 'Request could not be verified', 403: 'Access denied', 404: 'Page unavailable', 409: 'Case state changed', 413: 'Request too large', 422: 'Check your input', 429: 'Too many attempts', 500: 'Something went wrong'}.get(code, 'Request unavailable') }}</h1>
+    <p>{{ message }}</p>
+    <a class="button" href="{{ url_for('dashboard') if g.user else url_for('home') }}">{{ 'Back to workspace' if g.user else 'Back to home' }}</a>
+  </section>
+</main>
+{% endblock %}

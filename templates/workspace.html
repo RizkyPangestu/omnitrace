@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "fields.html" import csrf with context %}
+{% set role = g.user.role %}
+{% block body %}
+<div class="workspace">
+  <aside class="sidebar dark">
+    <a class="brand" href="{{ url_for('home') }}"><span class="mark">O</span> OmniTrace</a>
+    <nav aria-label="Workspace navigation">
+      <a href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>{{ 'Case register' if role == 'admin' else 'My cases' }}</a>
+      {% if role == 'client' %}<a href="{{ url_for('new_case') }}" {% if request.endpoint == 'new_case' %}aria-current="page"{% endif %}>Request investigation</a>{% endif %}
+      <a href="{{ url_for('profile') }}" {% if request.endpoint == 'profile' %}aria-current="page"{% endif %}>My profile</a>
+    </nav>
+  </aside>
+  <div class="workspace-main">
+    <header class="topbar">
+      <span>{{ g.user.name }} <span class="badge">{{ role|capitalize }}</span></span>
+      <form method="post" action="{{ url_for('logout') }}">{{ csrf() }}<button type="submit" class="signout">Log out</button></form>
+    </header>
+    <main id="main" class="content">
+      {% for message in get_flashed_messages() %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}
